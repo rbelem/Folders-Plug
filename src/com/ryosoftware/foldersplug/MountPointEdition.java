@@ -129,7 +129,7 @@ public class MountPointEdition extends Activity implements OnClickListener {
                 } else {
                     boolean allow_move = true;
                     if (iAction == DELETE_DESTINATION_ACTION) {
-                        if (! SuperuserCommandsExecutor.deleteFolderContents(iActivity, iSource)) {
+                        if (!SuperuserCommandsExecutor.deleteFolderContents(iActivity, iSource)) {
                             allow_move = false;
                             iHandler.sendEmptyMessage(CANNOT_DELETE_FOLDER_CONTENTS);
                         }

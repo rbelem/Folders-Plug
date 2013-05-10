@@ -21,7 +21,7 @@ public class Utilities {
 
     public static ArrayList<String> convertVectorToList(String [] vector) {
         ArrayList<String> list = new ArrayList<String>();
-        for (int i = 0; i < vector.length; i ++) {
+        for (int i = 0; i < vector.length; i++) {
             list.add(vector [i]);
         }
         return list;

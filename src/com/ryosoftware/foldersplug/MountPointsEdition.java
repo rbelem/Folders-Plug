@@ -54,7 +54,7 @@ public class MountPointsEdition extends Activity {
 
         private MountPoint getMountPointByIdentifier(int id) {
             MountPoint mountpoint;
-            for (int i = 0; i < iMountPoints.size(); i ++) {
+            for (int i = 0; i < iMountPoints.size(); i++) {
                 mountpoint = iMountPoints.get(i);
                 if (mountpoint.getId() == id) {
                     return mountpoint;
@@ -186,7 +186,7 @@ public class MountPointsEdition extends Activity {
                     }
                     break;
                 case MOUNT_MOUNTPOINT_MENUITEM:
-                    if (! mountpoint.getMounted()) {
+                    if (!mountpoint.getMounted()) {
                         MainService.updateMountPoint(iActivity, mountpoint);
                     }
                     break;
@@ -260,7 +260,7 @@ public class MountPointsEdition extends Activity {
     public boolean onPrepareOptionsMenu(Menu menu) {
         boolean enable_delete = (iMountPoints.size() > 0);
         if (enable_delete) {
-            for (int i = 0; i < iMountPoints.size(); i ++) {
+            for (int i = 0; i < iMountPoints.size(); i++) {
                 if (iMountPoints.get(i).getMounted()) {
                     enable_delete = false;
                 }
@@ -296,7 +296,7 @@ public class MountPointsEdition extends Activity {
 
     private boolean isMountPointEnableable(int id, String target) {
         MountPoint mountpoint;
-        for (int i = 0; i < iMountPoints.size(); i ++) {
+        for (int i = 0; i < iMountPoints.size(); i++) {
             mountpoint = iMountPoints.get(i);
             if (mountpoint.getId() == id) {
                 if (mountpoint.getEnabled()) {
@@ -314,7 +314,7 @@ public class MountPointsEdition extends Activity {
             String source = intent.getStringExtra(MountPointEdition.SOURCE_PATH), target = intent.getStringExtra(MountPointEdition.TARGET_PATH);
             MountPoint mountpoint;
             boolean duplicated = false;
-            for (int i = 0; i < iMountPoints.size(); i ++) {
+            for (int i = 0; i < iMountPoints.size(); i++) {
                 mountpoint = iMountPoints.get(i);
                 if ((mountpoint.getSource().equals(source)) && (mountpoint.getTarget().equals(target))) {
                     duplicated = true;
@@ -322,7 +322,7 @@ public class MountPointsEdition extends Activity {
                     DialogUtilities.showAlertDialog(this, R.string.duplicated_mountpoint, null);
                 }
             }
-            if ((! duplicated) && (iEditedMountPoint == MainService.UNKNOWN_MOUNTPOINT_IDENTIFIER)) {
+            if ((!duplicated) && (iEditedMountPoint == MainService.UNKNOWN_MOUNTPOINT_IDENTIFIER)) {
                 MainService.updateMountPoint(this, new MountPoint(iEditedMountPoint, source, target, isMountPointEnableable(iEditedMountPoint, target)));
             }
         }

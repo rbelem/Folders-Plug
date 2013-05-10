@@ -47,7 +47,7 @@ public class SuperuserCommandsExecutor {
     }
 
     private boolean initializeSuperuserFields() {
-        if ((! iLsFieldsInitializated) && (iSuperuserManager.canRunRootCommands())) {
+        if ((!iLsFieldsInitializated) && (iSuperuserManager.canRunRootCommands())) {
             iSuperuserManager.execute(String.format(GET_FOLDER_DATA, "/"));
             ArrayList<String> data = iSuperuserManager.getStandardOutput();
             if (data != null) {
@@ -55,8 +55,8 @@ public class SuperuserCommandsExecutor {
                     String [] fields = data.get(0).split(LS_DATA_SEPARATORS_REGEXP);
                     iLsFields = fields.length;
                     iLsPrefixed = true;
-                    if (! fields [fields.length - 1].equals("/")) {
-                        iLsFields ++;
+                    if (!fields [fields.length - 1].equals("/")) {
+                        iLsFields++;
                         iLsPrefixed = false;
                     }
                     iLsFieldsInitializated = true;
@@ -77,9 +77,9 @@ public class SuperuserCommandsExecutor {
             iSuperuserManager.execute(String.format(GET_FOLDER_CHILDS_DATA, pathname + "/"));
             ArrayList<String> childs = iSuperuserManager.getStandardOutput();
             if (childs != null) {
-                for (int i = childs.size() - 1; i >= 0; i --) {
+                for (int i = childs.size() - 1; i >= 0; i--) {
                     String child = childs.get(i);
-                    if (! child.startsWith("d")) {
+                    if (!child.startsWith("d")) {
                         childs.remove(i);
                         continue;
                     }
@@ -171,9 +171,9 @@ public class SuperuserCommandsExecutor {
                 ArrayList<String> childs = iSuperuserManager.getStandardOutput();
                 if (childs != null) {
                     is_empty = true;
-                    for (int i = 0; i < childs.size(); i ++) {
+                    for (int i = 0; i < childs.size(); i++) {
                         String child = childs.get(i);
-                        if (! child.startsWith("d")) {
+                        if (!child.startsWith("d")) {
                             is_empty = false;
                             break;
                         }
@@ -182,7 +182,7 @@ public class SuperuserCommandsExecutor {
                         if ((iLsPrefixed) && (filename.startsWith(pathname + "/"))) {
                             filename = filename.substring(pathname.length());
                         }
-                        if ((! filename.equals(".")) && (! filename.equals(".."))) {
+                        if ((!filename.equals(".")) && (!filename.equals(".."))) {
                             is_empty = false;
                             break;
                         }
@@ -236,7 +236,7 @@ public class SuperuserCommandsExecutor {
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, String.format("Trying to move contents for folder '%s' to folder '%s'", source, destination));
         if ((initializeSuperuserFields()) && (canRunRootCommands())) {
             ArrayList<String> commands = new ArrayList<String>();
-            for (int i = 0; i < RECURSIVE_MOVE_COMMAND.length; i ++) {
+            for (int i = 0; i < RECURSIVE_MOVE_COMMAND.length; i++) {
                 commands.add(String.format(RECURSIVE_MOVE_COMMAND [i], source, destination));
             }
             iSuperuserManager.execute(commands);
