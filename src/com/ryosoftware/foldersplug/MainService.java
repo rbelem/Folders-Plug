@@ -1,9 +1,5 @@
 package com.ryosoftware.foldersplug;
 
-import java.util.ArrayList;
-import com.ryosoftware.objects.DialogUtilities;
-import com.ryosoftware.objects.ProcessUtilities;
-import com.ryosoftware.objects.Utilities;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,6 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.IBinder;
+import com.ryosoftware.objects.DialogUtilities;
+import com.ryosoftware.objects.ProcessUtilities;
+import com.ryosoftware.objects.Utilities;
+
+import java.util.ArrayList;
 
 public class MainService extends Service {
     private static final String LOG_SUBTITLE = "MainService";
@@ -119,7 +120,7 @@ public class MainService extends Service {
                             source = cursor.getString(cursor.getColumnIndex(DatabaseContainer.FOLDERS_TABLE_SOURCE_KEY));
                             target = cursor.getString(cursor.getColumnIndex(DatabaseContainer.FOLDERS_TABLE_TARGET_KEY));
                             enabled = (cursor.getInt(cursor.getColumnIndex(DatabaseContainer.FOLDERS_TABLE_ENABLED_KEY)) > 0);
-                            iMountPoints.add(new MountPoint(id, source, target, enabled, false));
+                            iMountPoints.add(new MountPoint(id, source, target, enabled));
                             if (cursor.isLast()) {
                                 break;
                             }
@@ -142,7 +143,7 @@ public class MainService extends Service {
         try {
             id = iDatabaseContainer.insert(source, target, enabled);
             if (id != DatabaseContainer.ROW_ID_ERROR) {
-                iMountPoints.add(new MountPoint(id, source, target, enabled, false));
+                iMountPoints.add(new MountPoint(id, source, target, enabled));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -158,7 +159,7 @@ public class MainService extends Service {
             if (iDatabaseContainer.update(id, source, target, enabled)) {
                 mountpoint = getMountPointByIdentifier(id);
                 if (mountpoint == null) {
-                    mountpoint = new MountPoint(id, source, target, enabled, false);
+                    mountpoint = new MountPoint(id, source, target, enabled);
                     iMountPoints.add(mountpoint);
                 } else {
                     mountpoint.setSource(source);
@@ -233,8 +234,7 @@ public class MainService extends Service {
 
     private void getMountPointsStates(Intent intent) {
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Handling event 'get mount states'");
-        getMountState(0);
-        for (int i = 1; i < iMountPoints.size(); i ++) {
+        for (int i = 0; i < iMountPoints.size(); i++) {
             getMountState(i);
         }
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "'Get mount states' event handled");
@@ -260,9 +260,9 @@ public class MainService extends Service {
             } else {
                 correct = iSuperuserCommandsExecutor.unmountFolder(mountpoint.getTarget());
             }
+
             if (correct) {
                 DialogUtilities.showToastMessage(this, mount ? R.string.mounting_mountpoint_success : R.string.unmounting_mountpoint_success);
-                mountpoint.setMounted(mount);
                 Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, mount ? "Mountpoint mounted" : "Mountpoint umounted");
             } else {
                 DialogUtilities.showToastMessage(this, mount ? R.string.error_mounting_mountpoint : R.string.error_unmounting_mountpoint);
@@ -282,30 +282,17 @@ public class MainService extends Service {
         source = intent.getStringExtra(MOUNT_STATE_SOURCE);
         target = intent.getStringExtra(MOUNT_STATE_TARGET);
         enabled = intent.getBooleanExtra(MOUNT_STATE_ENABLED, false);
-        mounted = intent.getBooleanExtra(MOUNT_STATE_MOUNTED, false);
         if (id == UNKNOWN_MOUNTPOINT_IDENTIFIER) {
             id = createMountPointIntoDatabase(source, target, enabled);
         }
         if (id != UNKNOWN_MOUNTPOINT_IDENTIFIER) {
             MountPoint mountpoint = updateMountPointIntoDatabase(id, source, target, enabled);
             if (mountpoint != null) {
-                if (mountpoint.getEnabled()) {
-                    if (mounted != mountpoint.getMounted()) {
-                        if (mounted) {
-                            if (iUmsConnected) {
-                                DialogUtilities.showToastMessage(this, R.string.cannot_mount_mountpoint_while_ums_connection_active);
-                                mountpoint.setAutoUnmounted(true);
-                            } else {
-                                executeMountPointCommands(mountpoint, true);
-                            }
-                        } else {
-                            executeMountPointCommands(mountpoint, false);
-                        }
-                    }
+                if (iUmsConnected) {
+                    DialogUtilities.showToastMessage(this, R.string.cannot_mount_mountpoint_while_ums_connection_active);
+                    mountpoint.setAutoUnmounted(true);
                 } else {
-                    if (mountpoint.getMounted()) {
-                        executeMountPointCommands(mountpoint, false);
-                    }
+                    executeMountPointCommands(mountpoint, !mountpoint.getMounted());
                 }
             }
         }
@@ -403,7 +390,7 @@ public class MainService extends Service {
 
     private void deviceShutdownStarted() {
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Received device shutdown/reboot event");
-        for (int i = 0; i < iMountPoints.size(); i ++) {
+        for (int i = 0; i < iMountPoints.size(); i++) {
             executeMountPointCommands(iMountPoints.get(i), false);
         }
     }

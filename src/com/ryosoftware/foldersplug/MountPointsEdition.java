@@ -150,7 +150,6 @@ public class MountPointsEdition extends Activity {
             public void onClick() {
                 MountPoint mountpoint = getMountPointByIdentifier(iId);
                 if (mountpoint != null) {
-                    mountpoint.setMounted(false);
                     MainService.updateMountPoint(iActivity, mountpoint);
                 }
             }
@@ -188,7 +187,6 @@ public class MountPointsEdition extends Activity {
                     break;
                 case MOUNT_MOUNTPOINT_MENUITEM:
                     if (! mountpoint.getMounted()) {
-                        mountpoint.setMounted(true);
                         MainService.updateMountPoint(iActivity, mountpoint);
                     }
                     break;
@@ -241,7 +239,10 @@ public class MountPointsEdition extends Activity {
             iMountPoints.clear();
         }
         if (intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_HAS_VALUES, false)) {
-            iMountPoints.add(new MountPoint(intent.getIntExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IDENTIFIER, -1), intent.getStringExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_SOURCE), intent.getStringExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_TARGET), intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IS_ENABLED, false), intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IS_MOUNTED, false)));
+            iMountPoints.add(new MountPoint(intent.getIntExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IDENTIFIER, -1),
+                        intent.getStringExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_SOURCE),
+                        intent.getStringExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_TARGET),
+                        intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IS_ENABLED, false)));
         }
         if (intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IS_LAST_LIST_ELEMENT, false)) {
             iMountPointsListAdapter.notifyDataSetChanged(iMountPoints);
@@ -258,9 +259,13 @@ public class MountPointsEdition extends Activity {
 
     public boolean onPrepareOptionsMenu(Menu menu) {
         boolean enable_delete = (iMountPoints.size() > 0);
-        if (enable_delete) for (int i = 0; i < iMountPoints.size(); i ++) if (iMountPoints.get(i).getMounted()) {
+        if (enable_delete) {
+            for (int i = 0; i < iMountPoints.size(); i ++) {
+                if (iMountPoints.get(i).getMounted()) {
                     enable_delete = false;
                 }
+            }
+        }
         menu.findItem(R.id.delete_mountpoints_menuitem).setEnabled(enable_delete);
         return true;
     }
@@ -318,7 +323,7 @@ public class MountPointsEdition extends Activity {
                 }
             }
             if ((! duplicated) && (iEditedMountPoint == MainService.UNKNOWN_MOUNTPOINT_IDENTIFIER)) {
-                MainService.updateMountPoint(this, new MountPoint(iEditedMountPoint, source, target, isMountPointEnableable(iEditedMountPoint, target), false));
+                MainService.updateMountPoint(this, new MountPoint(iEditedMountPoint, source, target, isMountPointEnableable(iEditedMountPoint, target)));
             }
         }
     }
