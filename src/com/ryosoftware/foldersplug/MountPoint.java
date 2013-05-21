@@ -2,8 +2,7 @@ package com.ryosoftware.foldersplug;
 
 import com.ryosoftware.objects.Utilities;
 
-public class MountPoint
-{
+public class MountPoint {
     private static final String LOG_SUBTITLE = "MountPoint";
 
     private int iId;
@@ -13,8 +12,7 @@ public class MountPoint
     private boolean iEnabled;
     private boolean iAutoUnmounted;
 
-    MountPoint(int id, String source, String target, boolean enabled, boolean mounted)
-    {
+    MountPoint(int id, String source, String target, boolean enabled, boolean mounted) {
         iId = id;
         iSource = source;
         iTarget = target;
@@ -23,8 +21,7 @@ public class MountPoint
         iAutoUnmounted = false;
     }
 
-    public void logData()
-    {
+    public void logData() {
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Data logging startes");
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Identifier: " + iId);
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Source: " + iSource);
@@ -35,58 +32,47 @@ public class MountPoint
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Data logging ended");
     }
 
-    public int getId()
-    {
+    public int getId() {
         return iId;
     }
 
-    public String getSource()
-    {
+    public String getSource() {
         return iSource;
     }
 
-    public void setSource(String source)
-    {
+    public void setSource(String source) {
         iSource = source;
     }
 
-    public String getTarget()
-    {
+    public String getTarget() {
         return iTarget;
     }
 
-    public void setTarget(String target)
-    {
+    public void setTarget(String target) {
         iTarget = target;
     }
 
-    public boolean getMounted()
-    {
+    public boolean getMounted() {
         return iMounted;
     }
 
-    public void setMounted(boolean mounted)
-    {
+    public void setMounted(boolean mounted) {
         iMounted = mounted;
     }
 
-    public boolean getEnabled()
-    {
+    public boolean getEnabled() {
         return iEnabled;
     }
 
-    public void setEnabled(boolean enabled)
-    {
+    public void setEnabled(boolean enabled) {
         iEnabled = enabled;
     }
 
-    public boolean getAutoUnmounted()
-    {
+    public boolean getAutoUnmounted() {
         return iAutoUnmounted;
     }
 
-    public void setAutoUnmounted(boolean auto_unmounted)
-    {
+    public void setAutoUnmounted(boolean auto_unmounted) {
         iAutoUnmounted = auto_unmounted;
     }
 }
