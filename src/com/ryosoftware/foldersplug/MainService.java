@@ -259,13 +259,20 @@ public class MainService extends Service {
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Trying to mount/umount mountpoint");
         if (mountpoint.getMounted() != mount) {
             boolean correct;
+            String command = null;
             if (mount) {
-                correct = iSuperuserCommandsExecutor.mountFolders(mountpoint.getSource(), mountpoint.getTarget());
+                command = String.format("mount -o bind \"%s\" \"%s\"", mountpoint.getSource(), mountpoint.getTarget());
             } else {
-                correct = iSuperuserCommandsExecutor.unmountFolder(mountpoint.getTarget());
+                command = String.format("umount \"%s\"", mountpoint.getTarget());
             }
 
-            if (correct) {
+            try {
+                new AsyncRootCommand().execute(command).get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (mount == mountpoint.getMounted()) {
                 DialogUtilities.showToastMessage(this, mount ? R.string.mounting_mountpoint_success : R.string.unmounting_mountpoint_success);
                 Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, mount ? "Mountpoint mounted" : "Mountpoint umounted");
             } else {

@@ -1,0 +1,3 @@
+[submodule "libsuperuser"]
+	path = libsuperuser
+	url = git://github.com/Chainfire/libsuperuser.git
