@@ -9,12 +9,15 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+
+import java.io.File;
 
 public class MountPointEdition extends Activity implements OnClickListener {
     private static final String LOG_SUBTITLE = "MountPointEdition";
@@ -126,7 +129,7 @@ public class MountPointEdition extends Activity implements OnClickListener {
                 } else {
                     boolean allow_move = true;
                     if (iAction == DELETE_DESTINATION_ACTION) {
-                        if (! SuperuserCommandsExecutor.deleteFolderContents(iActivity, iSource)) {
+                        if (!SuperuserCommandsExecutor.deleteFolderContents(iActivity, iSource)) {
                             allow_move = false;
                             iHandler.sendEmptyMessage(CANNOT_DELETE_FOLDER_CONTENTS);
                         }
@@ -167,6 +170,18 @@ public class MountPointEdition extends Activity implements OnClickListener {
             break;
         case TEST_TARGET_FOLDER:
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State TEST_TARGET_FOLDER");
+
+            File filePath = new File(target);
+            if (!filePath.exists()) {
+                String parent = getValidDirectory(target);
+                File fileParent = new File(parent);
+                if (fileParent.canRead() && fileParent.canWrite()) {
+                    filePath.mkdirs();
+                } else {
+                    SuperuserCommandsExecutor.createFolder(this, target);
+                }
+            }
+
             if (SuperuserCommandsExecutor.isEmptyFolder(this, target)) {
                 doAcceptActions(FINISH_ACCEPT_STATE);
             } else {
@@ -174,7 +189,12 @@ public class MountPointEdition extends Activity implements OnClickListener {
                 SourceFolderDeletionConfirmButtonCallback combine_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.COMBINE_ACTION);
                 SourceFolderDeletionConfirmButtonCallback bypass_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.BYPASS_ACTION);
                 Resources resources = getResources();
-                DialogUtilities.showConfirmDialog(this, resources.getString(R.string.warning_title), resources.getString(R.string.target_folder_is_not_empty_need_action), resources.getString(R.string.accept_button), resources.getString(R.string.combine_button), resources.getString(R.string.bypass_button), deletion_callback, combine_callback, bypass_callback);
+                DialogUtilities.showConfirmDialog(this, resources.getString(R.string.warning_title),
+                        resources.getString(R.string.target_folder_is_not_empty_need_action),
+                        resources.getString(R.string.accept_button),
+                        resources.getString(R.string.combine_button),
+                        resources.getString(R.string.bypass_button),
+                        deletion_callback, combine_callback, bypass_callback);
             }
             break;
         case FINISH_ACCEPT_STATE:
@@ -188,19 +208,39 @@ public class MountPointEdition extends Activity implements OnClickListener {
         }
     }
 
+    private String getValidDirectory(String path) {
+        File filePath = new File(path);
+        if (filePath.exists()) {
+            if (filePath.isDirectory()) {
+                return path;
+            } else {
+                return filePath.getParent();
+            }
+        }
+
+        return getValidDirectory(filePath.getParent());
+    }
+
     private void setAcceptButtonState() {
         iAcceptButton.setEnabled((iSourceText.getText().length() > 0) && (iTargetText.getText().length() > 0));
     }
 
     protected void onActivityResult(int request_code, int result_code, Intent intent) {
-        if (result_code == RESULT_OK) {
-            Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Retrieving mountpoint value");
-            if (request_code == SOURCE_FILE_DIALOG) {
-                iSourceText.setText(intent.getStringExtra(FolderSelection.SELECTED_PATH));
-            } else if (request_code == TARGET_FILE_DIALOG) {
-                iTargetText.setText(intent.getStringExtra(FolderSelection.SELECTED_PATH));
-            }
-            setAcceptButtonState();
+        if (result_code != RESULT_OK) {
+            return;
         }
+
+        Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Retrieving mountpoint value");
+        if (request_code == SOURCE_FILE_DIALOG) {
+            iSourceText.setText(intent.getStringExtra(FolderSelection.SELECTED_PATH));
+            String path = intent.getStringExtra(FolderSelection.SELECTED_PATH);
+            if (path.startsWith("/mnt") || path.startsWith("/media") || path.startsWith("/storage")
+                    || path.startsWith(Environment.getExternalStorageDirectory().getPath()))
+                iTargetText.setText(intent.getStringExtra(FolderSelection.SELECTED_PATH));
+        } else if (request_code == TARGET_FILE_DIALOG) {
+            iTargetText.setText(intent.getStringExtra(FolderSelection.SELECTED_PATH));
+        }
+
+        setAcceptButtonState();
     }
 }

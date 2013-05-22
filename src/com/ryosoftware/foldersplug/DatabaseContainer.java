@@ -88,7 +88,9 @@ public class DatabaseContainer {
 
     public int insert(String source, String destination, boolean enabled) {
         int id = ROW_ID_ERROR;
-        Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, String.format("Trying to make insert (source=%s, destination=%s, enabled=%s)", source, destination, Utilities.getString(enabled, Utilities.GET_STRING_FROM_BOOLEAN_TYPE_IS_AVAILABILITY)));
+        Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE,
+                String.format("Trying to make insert (source=%s, destination=%s, enabled=%s)", source, destination,
+                        Utilities.getString(enabled, Utilities.GET_STRING_FROM_BOOLEAN_TYPE_IS_AVAILABILITY)));
         if (iSQLiteDatabase != null) {
             try {
                 ContentValues values = new ContentValues();
@@ -106,7 +108,9 @@ public class DatabaseContainer {
 
     public boolean update(int row_id, String source, String destination, boolean enabled) {
         boolean updated = false;
-        Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, String.format("Trying to make update (source=%s, destination=%s, enabled=%s)", source, destination, Utilities.getString(enabled, Utilities.GET_STRING_FROM_BOOLEAN_TYPE_IS_AVAILABILITY)));
+        Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE,
+                String.format("Trying to make update (source=%s, destination=%s, enabled=%s)", source, destination,
+                        Utilities.getString(enabled, Utilities.GET_STRING_FROM_BOOLEAN_TYPE_IS_AVAILABILITY)));
         if (iSQLiteDatabase != null) {
             try {
                 ContentValues values = new ContentValues();
@@ -140,7 +144,8 @@ public class DatabaseContainer {
         Cursor cursor = null;
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Retrieving all rows data");
         if (iSQLiteDatabase != null) {
-            String [] fields = { FOLDERS_TABLE_ROWID_KEY, FOLDERS_TABLE_SOURCE_KEY, FOLDERS_TABLE_TARGET_KEY, FOLDERS_TABLE_ENABLED_KEY };
+            String [] fields = {FOLDERS_TABLE_ROWID_KEY, FOLDERS_TABLE_SOURCE_KEY,
+                                FOLDERS_TABLE_TARGET_KEY, FOLDERS_TABLE_ENABLED_KEY};
             try {
                 cursor = iSQLiteDatabase.query(FOLDERS_TABLE_NAME, fields, null, null, null, null, null);
             } catch (Exception e) {
@@ -155,9 +160,11 @@ public class DatabaseContainer {
         Cursor cursor = null;
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, String.format("Retrieving row with id=%d", row_id));
         if (iSQLiteDatabase != null) {
-            String [] fields = { FOLDERS_TABLE_ROWID_KEY, FOLDERS_TABLE_SOURCE_KEY, FOLDERS_TABLE_TARGET_KEY, FOLDERS_TABLE_ENABLED_KEY };
+            String [] fields = {FOLDERS_TABLE_ROWID_KEY, FOLDERS_TABLE_SOURCE_KEY,
+                                FOLDERS_TABLE_TARGET_KEY, FOLDERS_TABLE_ENABLED_KEY};
             try {
-                cursor = iSQLiteDatabase.query(true, FOLDERS_TABLE_NAME, fields, String.format("%s=%d", FOLDERS_TABLE_ROWID_KEY, row_id), null, null, null, null, null);
+                cursor = iSQLiteDatabase.query(true, FOLDERS_TABLE_NAME, fields,
+                        String.format("%s=%d", FOLDERS_TABLE_ROWID_KEY, row_id), null, null, null, null, null);
                 if (cursor != null) {
                     cursor.moveToFirst();
                 }
@@ -175,7 +182,9 @@ public class DatabaseContainer {
         if (iSQLiteDatabase != null) {
             try {
                 String [] fields = { FOLDERS_TABLE_ROWID_KEY };
-                Cursor cursor = iSQLiteDatabase.query(true, FOLDERS_TABLE_NAME, fields, String.format("%s='%s'", FOLDERS_TABLE_SOURCE_KEY, source), null, null, null, null, null);
+                Cursor cursor = iSQLiteDatabase.query(true, FOLDERS_TABLE_NAME, fields,
+                        String.format("%s='%s'", FOLDERS_TABLE_SOURCE_KEY, source),
+                        null, null, null, null, null);
                 if (cursor != null) {
                     try {
                         if (cursor.getCount() > 0) {
@@ -199,4 +208,3 @@ public class DatabaseContainer {
         return id;
     }
 }
-

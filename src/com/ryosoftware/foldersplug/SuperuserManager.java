@@ -53,7 +53,7 @@ public class SuperuserManager {
             } catch (Exception e) {
                 closeSession();
             }
-            if (! correct) {
+            if (!correct) {
                 try {
                     closeSession();
                 } finally {
@@ -115,7 +115,7 @@ public class SuperuserManager {
                     if (uid == null) {
                         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Can't get root access or denied by user");
                     } else {
-                        if (! uid.contains("uid=0")) {
+                        if (!uid.contains("uid=0")) {
                             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Root access rejected. I'm " + uid);
                         } else {
                             is_root = true;
@@ -140,10 +140,10 @@ public class SuperuserManager {
                     try {
                         getStandardOutput();
                         getErrorOutput();
-                        for (int i = 0; i < AUTO_ADDED_EXECUTE_COMMANDS.length; i ++) {
+                        for (int i = 0; i < AUTO_ADDED_EXECUTE_COMMANDS.length; i++) {
                             commands.add(AUTO_ADDED_EXECUTE_COMMANDS [i]);
                         }
-                        for (int i = 0; i < commands.size(); i ++) {
+                        for (int i = 0; i < commands.size(); i++) {
                             String command = commands.get(i) + COMMANDS_SEPARATOR;
                             iDataOutputStream.writeBytes(command);
                             iDataOutputStream.flush();

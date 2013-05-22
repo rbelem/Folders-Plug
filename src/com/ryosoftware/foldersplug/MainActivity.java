@@ -61,10 +61,10 @@ public class MainActivity extends Activity {
         }
         if (intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_HAS_VALUES, false)) {
             if (intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IS_MOUNTED, false)) {
-                iMountedConnections ++;
+                iMountedConnections++;
             }
             if (intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IS_ENABLED, false)) {
-                iEnabledConnections ++;
+                iEnabledConnections++;
             }
         }
         if (intent.getBooleanExtra(MainService.ACTION_GET_MOUNT_STATES_ANSWER_IS_LAST_LIST_ELEMENT, false)) {

@@ -179,9 +179,13 @@ public class MainService extends Service {
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Trying to remove mountpoint");
         try {
             deleted = iDatabaseContainer.delete(id);
-            if (deleted) for (int i = iMountPoints.size() - 1; i >= 0; i --) if (iMountPoints.get(i).getId() == id) {
+            if (deleted) {
+                for (int i = iMountPoints.size() - 1; i >= 0; i--) {
+                    if (iMountPoints.get(i).getId() == id) {
                         iMountPoints.remove(i);
                     }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -191,7 +195,7 @@ public class MainService extends Service {
 
     private MountPoint getMountPointByIdentifier(int id) {
         MountPoint mountpoint;
-        for (int i = 0; i < iMountPoints.size(); i ++) {
+        for (int i = 0; i < iMountPoints.size(); i++) {
             mountpoint = iMountPoints.get(i);
             if (mountpoint.getId() == id) {
                 return mountpoint;
@@ -345,7 +349,7 @@ public class MainService extends Service {
     private void removeMountPoints(Intent intent) {
         MountPoint mountpoint;
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Handling event 'remove mountpoints'");
-        for (int i = iMountPoints.size() - 1; i >= 0; i --) {
+        for (int i = iMountPoints.size() - 1; i >= 0; i--) {
             mountpoint = iMountPoints.get(i);
             if (mountpoint.getMounted()) {
                 executeMountPointCommands(mountpoint, false);
@@ -373,10 +377,10 @@ public class MainService extends Service {
             MountPoint mountpoint;
             boolean toast_showed = false;
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Automounts when device boots is enabled");
-            for (int i = 0; i < iMountPoints.size(); i ++) {
+            for (int i = 0; i < iMountPoints.size(); i++) {
                 mountpoint = iMountPoints.get(i);
                 if (mountpoint.getEnabled()) {
-                    if (! toast_showed) {
+                    if (!toast_showed) {
                         DialogUtilities.showToastMessage(this, R.string.device_bootup_completed_automounting);
                         toast_showed = true;
                     }
@@ -396,14 +400,14 @@ public class MainService extends Service {
     }
 
     private void deviceUmsConnected() {
-        if (! iUmsConnected) {
+        if (!iUmsConnected) {
             MountPoint mountpoint;
             boolean toast_showed = false;
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Received device ums connected event");
-            for (int i = 0; i < iMountPoints.size(); i ++) {
+            for (int i = 0; i < iMountPoints.size(); i++) {
                 mountpoint = iMountPoints.get(i);
                 if (mountpoint.getMounted()) {
-                    if (! toast_showed) {
+                    if (!toast_showed) {
                         DialogUtilities.showToastMessage(this, R.string.ums_connection_activated);
                         toast_showed = true;
                     }
@@ -420,12 +424,12 @@ public class MainService extends Service {
             MountPoint mountpoint;
             boolean toast_showed = false;
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Received device ums disconnected event");
-            for (int i = 0; i < iMountPoints.size(); i ++) {
+            for (int i = 0; i < iMountPoints.size(); i++) {
                 mountpoint = iMountPoints.get(i);
                 if (mountpoint.getAutoUnmounted()) {
                     mountpoint.setAutoUnmounted(false);
                     if (mountpoint.getEnabled()) {
-                        if (! toast_showed) {
+                        if (!toast_showed) {
                             DialogUtilities.showToastMessage(this, R.string.ums_connection_deactivated);
                             toast_showed = true;
                         }

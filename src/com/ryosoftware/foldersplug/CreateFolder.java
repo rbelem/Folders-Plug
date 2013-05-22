@@ -50,10 +50,10 @@ public class CreateFolder extends Dialog implements OnClickListener {
             if (iCallback != null) {
                 iCallback.onCreateFolderDialogEnded(Activity.RESULT_OK, intent);
             }
-        } else if (view.getId() == R.id.button_cancel) if (iCallback != null) {
-                Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Negative button clicked");
-                dismiss();
-                iCallback.onCreateFolderDialogEnded(Activity.RESULT_CANCELED, null);
-            }
+        } else if ((view.getId() == R.id.button_cancel) && (iCallback != null)) {
+            Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Negative button clicked");
+            dismiss();
+            iCallback.onCreateFolderDialogEnded(Activity.RESULT_CANCELED, null);
+        }
     }
 }
