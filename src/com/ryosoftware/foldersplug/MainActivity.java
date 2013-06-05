@@ -33,6 +33,19 @@ public class MainActivity extends Activity {
         super.onCreate(saved_instance_bundle);
         iBroadcastReceiver = new MainActivityBroadcastReceiver();
         setContentView(R.layout.main);
+
+        Boolean gotRoot = false;
+        CheckRootCommand rootCommand = new CheckRootCommand();
+        try {
+            rootCommand.execute().get();
+            gotRoot = rootCommand.result();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (!gotRoot) {
+            onDestroy();
+            return;
+        }
         registerReceiver(iBroadcastReceiver, new IntentFilter(MainService.ACTION_GET_MOUNT_STATES_ANSWER));
         Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Class created");
         MainService.getMountPointsStates(this);

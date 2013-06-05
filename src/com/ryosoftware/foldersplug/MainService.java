@@ -65,7 +65,6 @@ public class MainService extends Service {
     private MainServiceBroadcastReceiver iBroadcastReceiver;
     private DatabaseContainer iDatabaseContainer;
     private ArrayList<MountPoint> iMountPoints;
-    private SuperuserCommandsExecutor iSuperuserCommandsExecutor;
     private boolean iUmsConnected;
 
     public void onCreate() {
@@ -73,7 +72,6 @@ public class MainService extends Service {
         iDatabaseContainer = new DatabaseContainer(this);
         iDatabaseContainer.open();
         iMountPoints = new ArrayList<MountPoint>();
-        iSuperuserCommandsExecutor = new SuperuserCommandsExecutor();
         iUmsConnected = false;
         loadMountPointsFromDatabase();
         iBroadcastReceiver = new MainServiceBroadcastReceiver();

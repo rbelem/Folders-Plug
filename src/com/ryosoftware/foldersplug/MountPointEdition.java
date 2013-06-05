@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.List;
 
 public class MountPointEdition extends Activity implements OnClickListener {
     private static final String LOG_SUBTITLE = "MountPointEdition";
@@ -30,7 +31,8 @@ public class MountPointEdition extends Activity implements OnClickListener {
 
     private static final int START_ACCEPT_STATE = 1;
     private static final int TEST_TARGET_FOLDER = 2;
-    private static final int FINISH_ACCEPT_STATE = 3;
+    private static final int MOVE_TARGET_CONTENTS = 3;
+    private static final int FINISH_ACCEPT_STATE = 4;
 
     private Button iAcceptButton;
     private Button iCancelButton;
@@ -157,8 +159,31 @@ public class MountPointEdition extends Activity implements OnClickListener {
         }
     }
 
+    private List<String> runRootCommand(String command) {
+        List<String> result = null;
+
+        try {
+            AsyncRootCommand rootCommand = new AsyncRootCommand();
+            rootCommand.execute(command).get();
+            result = rootCommand.result();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    private AsyncRootCommandListener moveTargetContentToSource = new AsyncRootCommandListener() {
+        @Override
+        public void onCommandCompleted(List<String> result) {
+            doAcceptActions(FINISH_ACCEPT_STATE);
+        }
+    };
+
     private void doAcceptActions(int state) {
-        final String source = iSourceText.getText().toString(), target = iTargetText.getText().toString();
+        final String source = iSourceText.getText().toString();
+        final String target = iTargetText.getText().toString();
+
         switch (state) {
         case START_ACCEPT_STATE:
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State START_ACCEPT_STATE");
@@ -171,19 +196,30 @@ public class MountPointEdition extends Activity implements OnClickListener {
         case TEST_TARGET_FOLDER:
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State TEST_TARGET_FOLDER");
 
-            File filePath = new File(target);
-            if (!filePath.exists()) {
-                String parent = getValidDirectory(target);
-                File fileParent = new File(parent);
-                if (fileParent.canRead() && fileParent.canWrite()) {
-                    filePath.mkdirs();
-                } else {
-                    SuperuserCommandsExecutor.createFolder(this, target);
-                }
-            }
+            List<String> resultSource = runRootCommand(String.format("busybox ls -a \"%s\"", source));
 
-            if (SuperuserCommandsExecutor.isEmptyFolder(this, target)) {
-                doAcceptActions(FINISH_ACCEPT_STATE);
+            if (resultSource.isEmpty()) {
+                String parent = getValidDirectory(source);
+                String sourceBaseDir;
+
+                if (source.startsWith("/mnt") || source.startsWith("/media") || source.startsWith("/storage")
+                    || source.startsWith(Environment.getExternalStorageDirectory().getPath())) {
+                    sourceBaseDir = Environment.getExternalStorageDirectory().getPath();
+                } else {
+                    sourceBaseDir = parent;
+                }
+
+                List<String> resultStatAccessRights = runRootCommand(String.format("busybox stat -L -c \"%%a\" \"%s\"", sourceBaseDir));
+                String sourceDirAccessRights = resultStatAccessRights.get(0);
+                runRootCommand(String.format("busybox mkdir -p -m %s \"%s\"", sourceDirAccessRights, source));
+
+                List<String> resultStatUserAndGroup = runRootCommand(String.format("busybox stat -L -c \"%%u:%%g\" \"%s\"", sourceBaseDir));
+                String userAndGroup = resultStatUserAndGroup.get(0);
+                String sourceDir = source;
+                if (!source.equals(parent)) {
+                    sourceDir = parent;
+                }
+                runRootCommand(String.format("busybox chown -R %s \"%s\"", userAndGroup, sourceDir));
             } else {
                 SourceFolderDeletionConfirmButtonCallback deletion_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.DELETE_DESTINATION_ACTION);
                 SourceFolderDeletionConfirmButtonCallback combine_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.COMBINE_ACTION);
@@ -196,6 +232,24 @@ public class MountPointEdition extends Activity implements OnClickListener {
                         resources.getString(R.string.bypass_button),
                         deletion_callback, combine_callback, bypass_callback);
             }
+
+            List<String> resultTarget = runRootCommand(String.format("busybox ls -a \"%s\"", source));
+            int action = resultTarget.isEmpty() ? FINISH_ACCEPT_STATE : MOVE_TARGET_CONTENTS;
+            doAcceptActions(action);
+            break;
+        case MOVE_TARGET_CONTENTS:
+            Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State MOVE_TARGET_CONTENTS");
+
+            try {
+                AsyncRootCommand rootCommand = new AsyncRootCommand(this);
+                rootCommand.setListener(moveTargetContentToSource);
+                rootCommand.setDialogTitle("Wait...");
+                rootCommand.setDialogMessage("Moving files...");
+                rootCommand.execute(String.format("busybox mv -f \"%s/\"* \"%s\"", target, source));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             break;
         case FINISH_ACCEPT_STATE:
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State FINISH_ACCEPT_STATE");
