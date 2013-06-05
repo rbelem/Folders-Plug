@@ -1,5 +1,9 @@
 package com.ryosoftware.foldersplug;
 
+import com.ryosoftware.foldersplug.AsyncMkdirCommand;
+import com.ryosoftware.foldersplug.AsyncMkdirCommand.AsyncMkdirCommandListener;
+import com.ryosoftware.foldersplug.AsyncRootCommand;
+import com.ryosoftware.foldersplug.AsyncRootCommand.AsyncRootCommandListener;
 import com.ryosoftware.foldersplug.R;
 import com.ryosoftware.objects.DialogUtilities;
 import com.ryosoftware.objects.DialogUtilities.ButtonClickCallback;
@@ -17,7 +21,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.File;
 import java.util.List;
 
 public class MountPointEdition extends Activity implements OnClickListener {
@@ -180,6 +183,13 @@ public class MountPointEdition extends Activity implements OnClickListener {
         }
     };
 
+    private AsyncMkdirCommandListener createSourceFolder = new AsyncMkdirCommandListener() {
+        @Override
+        public void onCommandCompleted(Boolean result) {
+            doAcceptActions(TEST_TARGET_FOLDER);
+        }
+    };
+
     private void doAcceptActions(int state) {
         final String source = iSourceText.getText().toString();
         final String target = iTargetText.getText().toString();
@@ -196,31 +206,29 @@ public class MountPointEdition extends Activity implements OnClickListener {
         case TEST_TARGET_FOLDER:
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State TEST_TARGET_FOLDER");
 
+            List<String> resultTarget = runRootCommand(String.format("busybox ls -a \"%s\"", target));
+            if (resultTarget.isEmpty()) {
+                try {
+                    AsyncMkdirCommand command = new AsyncMkdirCommand(this);
+                    command.execute(target);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            int action = resultTarget.isEmpty() ? FINISH_ACCEPT_STATE : MOVE_TARGET_CONTENTS;
+
             List<String> resultSource = runRootCommand(String.format("busybox ls -a \"%s\"", source));
-
             if (resultSource.isEmpty()) {
-                String parent = getValidDirectory(source);
-                String sourceBaseDir;
-
-                if (source.startsWith("/mnt") || source.startsWith("/media") || source.startsWith("/storage")
-                    || source.startsWith(Environment.getExternalStorageDirectory().getPath())) {
-                    sourceBaseDir = Environment.getExternalStorageDirectory().getPath();
-                } else {
-                    sourceBaseDir = parent;
+                try {
+                    AsyncMkdirCommand command = new AsyncMkdirCommand(this);
+                    command.setListener(createSourceFolder);
+                    command.execute(source);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
-                List<String> resultStatAccessRights = runRootCommand(String.format("busybox stat -L -c \"%%a\" \"%s\"", sourceBaseDir));
-                String sourceDirAccessRights = resultStatAccessRights.get(0);
-                runRootCommand(String.format("busybox mkdir -p -m %s \"%s\"", sourceDirAccessRights, source));
-
-                List<String> resultStatUserAndGroup = runRootCommand(String.format("busybox stat -L -c \"%%u:%%g\" \"%s\"", sourceBaseDir));
-                String userAndGroup = resultStatUserAndGroup.get(0);
-                String sourceDir = source;
-                if (!source.equals(parent)) {
-                    sourceDir = parent;
-                }
-                runRootCommand(String.format("busybox chown -R %s \"%s\"", userAndGroup, sourceDir));
-            } else {
+                break;
+            } else if (resultSource.size() > 2) {
                 SourceFolderDeletionConfirmButtonCallback deletion_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.DELETE_DESTINATION_ACTION);
                 SourceFolderDeletionConfirmButtonCallback combine_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.COMBINE_ACTION);
                 SourceFolderDeletionConfirmButtonCallback bypass_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.BYPASS_ACTION);
@@ -231,11 +239,11 @@ public class MountPointEdition extends Activity implements OnClickListener {
                         resources.getString(R.string.combine_button),
                         resources.getString(R.string.bypass_button),
                         deletion_callback, combine_callback, bypass_callback);
+                break;
             }
 
-            List<String> resultTarget = runRootCommand(String.format("busybox ls -a \"%s\"", source));
-            int action = resultTarget.isEmpty() ? FINISH_ACCEPT_STATE : MOVE_TARGET_CONTENTS;
             doAcceptActions(action);
+
             break;
         case MOVE_TARGET_CONTENTS:
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State MOVE_TARGET_CONTENTS");
@@ -260,19 +268,6 @@ public class MountPointEdition extends Activity implements OnClickListener {
             finish();
             break;
         }
-    }
-
-    private String getValidDirectory(String path) {
-        File filePath = new File(path);
-        if (filePath.exists()) {
-            if (filePath.isDirectory()) {
-                return path;
-            } else {
-                return filePath.getParent();
-            }
-        }
-
-        return getValidDirectory(filePath.getParent());
     }
 
     private void setAcceptButtonState() {
