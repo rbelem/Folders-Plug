@@ -34,8 +34,11 @@ public class MountPointEdition extends Activity implements OnClickListener {
 
     private static final int START_ACCEPT_STATE = 1;
     private static final int TEST_TARGET_FOLDER = 2;
-    private static final int MOVE_TARGET_CONTENTS = 3;
-    private static final int FINISH_ACCEPT_STATE = 4;
+    private static final int COMBINE_CONTENTS = 3;
+    private static final int CLEANUP_TARGET_CONTENTS = 4;
+    private static final int CLEANUP_SOURCE_CONTENTS = 5;
+    private static final int MOVE_TARGET_CONTENTS = 6;
+    private static final int FINISH_ACCEPT_STATE = 7;
 
     private Button iAcceptButton;
     private Button iCancelButton;
@@ -90,78 +93,6 @@ public class MountPointEdition extends Activity implements OnClickListener {
         }
     }
 
-    private class SourceFolderDeletionConfirmButtonCallback implements ButtonClickCallback {
-        private static final int DELETE_DESTINATION_ACTION = 1;
-        private static final int COMBINE_ACTION = 2;
-        private static final int BYPASS_ACTION = 3;
-
-        private Activity iActivity;
-        private String iSource;
-        private String iTarget;
-        private int iAction;
-
-        private class DeleteFolderContentsInstructions extends Thread {
-            private int OPERATION_COMPLETED_WITHOUT_ERRORS = 0;
-            private int CANNOT_DELETE_FOLDER_CONTENTS = 1;
-            private int CANNOT_MOVE_FOLDER_CONTENTS = 2;
-
-            class DeleteFolderContentsInstructionsHandler extends Handler {
-                public void handleMessage(Message message) {
-                    if (iDialog != null) {
-                        iDialog.dismiss();
-                    }
-                    if (message.what == CANNOT_DELETE_FOLDER_CONTENTS) {
-                        DialogUtilities.showAlertDialog(iActivity, R.string.cannot_delete_files, null);
-                    } else if (message.what == CANNOT_MOVE_FOLDER_CONTENTS) {
-                        DialogUtilities.showAlertDialog(iActivity, R.string.cannot_move_files, null);
-                    } else if (message.what == OPERATION_COMPLETED_WITHOUT_ERRORS) {
-                        doAcceptActions(FINISH_ACCEPT_STATE);
-                    }
-                }
-            }
-
-            private ProgressDialog iDialog;
-            private DeleteFolderContentsInstructionsHandler iHandler;
-
-            DeleteFolderContentsInstructions(ProgressDialog dialog) {
-                iDialog = dialog;
-                iHandler = new DeleteFolderContentsInstructionsHandler();
-            }
-
-            public void run() {
-                if (iAction == BYPASS_ACTION) {
-                    iHandler.sendEmptyMessage(OPERATION_COMPLETED_WITHOUT_ERRORS);
-                } else {
-                    boolean allow_move = true;
-                    if (iAction == DELETE_DESTINATION_ACTION) {
-                        if (!SuperuserCommandsExecutor.deleteFolderContents(iActivity, iSource)) {
-                            allow_move = false;
-                            iHandler.sendEmptyMessage(CANNOT_DELETE_FOLDER_CONTENTS);
-                        }
-                    }
-                    if (allow_move) {
-                        iHandler.sendEmptyMessage(SuperuserCommandsExecutor.moveFolderContents(iActivity, iTarget, iSource) ? OPERATION_COMPLETED_WITHOUT_ERRORS : CANNOT_DELETE_FOLDER_CONTENTS);
-                    }
-                }
-            }
-        }
-
-        SourceFolderDeletionConfirmButtonCallback(Activity activity, String source, String target, int action) {
-            iActivity = activity;
-            iSource = source;
-            iTarget = target;
-            iAction = action;
-        }
-
-        public void onClick() {
-            ProgressDialog dialog = null;
-            if (iAction != BYPASS_ACTION) {
-                (dialog = DialogUtilities.showProgressDialog(iActivity, R.string.moving_files)).show();
-            }
-            new DeleteFolderContentsInstructions(dialog).start();
-        }
-    }
-
     private List<String> runRootCommand(String command) {
         List<String> result = null;
 
@@ -176,9 +107,23 @@ public class MountPointEdition extends Activity implements OnClickListener {
         return result;
     }
 
-    private AsyncRootCommandListener moveTargetContentToSource = new AsyncRootCommandListener() {
+    private ButtonClickCallback cleanupSourceCallback = new ButtonClickCallback() {
         @Override
-        public void onCommandCompleted(List<String> result) {
+        public void onClick() {
+            doAcceptActions(CLEANUP_SOURCE_CONTENTS);
+        }
+    };
+
+    private ButtonClickCallback combineContentsCallback = new ButtonClickCallback() {
+        @Override
+        public void onClick() {
+            doAcceptActions(COMBINE_CONTENTS);
+        }
+    };
+
+    private ButtonClickCallback bypassCallback = new ButtonClickCallback() {
+        @Override
+        public void onClick() {
             doAcceptActions(FINISH_ACCEPT_STATE);
         }
     };
@@ -187,6 +132,34 @@ public class MountPointEdition extends Activity implements OnClickListener {
         @Override
         public void onCommandCompleted(Boolean result) {
             doAcceptActions(TEST_TARGET_FOLDER);
+        }
+    };
+
+    private AsyncRootCommandListener combineContentsListener = new AsyncRootCommandListener() {
+        @Override
+        public void onCommandCompleted(List<String> result) {
+            doAcceptActions(CLEANUP_TARGET_CONTENTS);
+        }
+    };
+
+    private AsyncRootCommandListener cleanupTargetListener = new AsyncRootCommandListener() {
+        @Override
+        public void onCommandCompleted(List<String> result) {
+            doAcceptActions(FINISH_ACCEPT_STATE);
+        }
+    };
+
+    private AsyncRootCommandListener cleanupSourceListener = new AsyncRootCommandListener() {
+        @Override
+        public void onCommandCompleted(List<String> result) {
+            doAcceptActions(TEST_TARGET_FOLDER);
+        }
+    };
+
+    private AsyncRootCommandListener moveTargetContentToSource = new AsyncRootCommandListener() {
+        @Override
+        public void onCommandCompleted(List<String> result) {
+            doAcceptActions(FINISH_ACCEPT_STATE);
         }
     };
 
@@ -206,6 +179,7 @@ public class MountPointEdition extends Activity implements OnClickListener {
         case TEST_TARGET_FOLDER:
             Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State TEST_TARGET_FOLDER");
 
+            int action = FINISH_ACCEPT_STATE;
             List<String> resultTarget = runRootCommand(String.format("busybox ls -a \"%s\"", target));
             if (resultTarget.isEmpty()) {
                 try {
@@ -214,8 +188,12 @@ public class MountPointEdition extends Activity implements OnClickListener {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            } else {
+                String[] contents = resultTarget.get(0).split("[\\s]+");
+                if (contents.length > 2) {
+                    action = MOVE_TARGET_CONTENTS;
+                }
             }
-            int action = resultTarget.isEmpty() ? FINISH_ACCEPT_STATE : MOVE_TARGET_CONTENTS;
 
             List<String> resultSource = runRootCommand(String.format("busybox ls -a \"%s\"", source));
             if (resultSource.isEmpty()) {
@@ -228,21 +206,63 @@ public class MountPointEdition extends Activity implements OnClickListener {
                 }
 
                 break;
-            } else if (resultSource.size() > 2) {
-                SourceFolderDeletionConfirmButtonCallback deletion_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.DELETE_DESTINATION_ACTION);
-                SourceFolderDeletionConfirmButtonCallback combine_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.COMBINE_ACTION);
-                SourceFolderDeletionConfirmButtonCallback bypass_callback = new SourceFolderDeletionConfirmButtonCallback(this, source, target, SourceFolderDeletionConfirmButtonCallback.BYPASS_ACTION);
-                Resources resources = getResources();
-                DialogUtilities.showConfirmDialog(this, resources.getString(R.string.warning_title),
-                        resources.getString(R.string.target_folder_is_not_empty_need_action),
-                        resources.getString(R.string.accept_button),
-                        resources.getString(R.string.combine_button),
-                        resources.getString(R.string.bypass_button),
-                        deletion_callback, combine_callback, bypass_callback);
-                break;
+            } else {
+                String[] contents = resultSource.get(0).split("[\\s]+");
+                if (contents.length > 2) {
+                    Resources resources = getResources();
+                    DialogUtilities.showConfirmDialog(this, resources.getString(R.string.warning_title),
+                            resources.getString(R.string.target_folder_is_not_empty_need_action),
+                            resources.getString(R.string.accept_button),
+                            resources.getString(R.string.combine_button),
+                            resources.getString(R.string.bypass_button),
+                            cleanupSourceCallback, combineContentsCallback, bypassCallback);
+                    break;
+                }
             }
 
             doAcceptActions(action);
+
+            break;
+        case COMBINE_CONTENTS:
+            Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State COMBINE_CONTENTS");
+
+            try {
+                AsyncRootCommand rootCommand = new AsyncRootCommand(this);
+                rootCommand.setListener(combineContentsListener);
+                rootCommand.setDialogTitle("Wait...");
+                rootCommand.setDialogMessage("Combining files...");
+                rootCommand.execute(String.format("busybox cp -a \"%s/\"* \"%s\"", target, source));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            break;
+        case CLEANUP_TARGET_CONTENTS:
+            Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State CLEANUP_TARGET_CONTENTS");
+
+            try {
+                AsyncRootCommand rootCommand = new AsyncRootCommand(this);
+                rootCommand.setListener(cleanupTargetListener);
+                rootCommand.setDialogTitle("Wait...");
+                rootCommand.setDialogMessage("Cleaning up target...");
+                rootCommand.execute(String.format("busybox rm -rf \"%s/\"*", target));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            break;
+        case CLEANUP_SOURCE_CONTENTS:
+            Utilities.log(Constants.LOG_TITLE, LOG_SUBTITLE, "Accept algorithm started: State CLEANUP_SOURCE_CONTENTS");
+
+            try {
+                AsyncRootCommand rootCommand = new AsyncRootCommand(this);
+                rootCommand.setListener(cleanupSourceListener);
+                rootCommand.setDialogTitle("Wait...");
+                rootCommand.setDialogMessage("Cleaning up source...");
+                rootCommand.execute(String.format("busybox rm -rf \"%s/\"*", source));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             break;
         case MOVE_TARGET_CONTENTS:
