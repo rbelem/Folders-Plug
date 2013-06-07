@@ -10,6 +10,10 @@ import java.util.List;
 import eu.chainfire.libsuperuser.Shell;
 
 public class AsyncRootCommand extends AsyncTask<String, Void, List<String>> {
+    public interface AsyncRootCommandListener {
+        public void onCommandCompleted(List<String> result);
+    }
+
     private Activity m_activity;
     private AsyncRootCommandListener m_listener;
     private ProgressDialog m_dialog = null;
