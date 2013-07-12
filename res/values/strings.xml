@@ -71,6 +71,8 @@
     <string name="app_version">1.0.0-RC1</string>
     
     <string name="mount_on_boot_preference_default">false</string>
-        
-        
+    <string name="mount_all_mountpoints_menuitem">Mount all</string>
+    <string name="umount_all_mountpoints_menuitem">Umount all</string>
+
+
 </resources>

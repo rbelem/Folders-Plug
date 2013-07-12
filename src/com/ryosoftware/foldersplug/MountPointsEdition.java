@@ -290,6 +290,10 @@ public class MountPointsEdition extends Activity {
         } else if (id == R.id.delete_mountpoints_menuitem) {
             MountPointsDeleteConfirmationCallback callback = new MountPointsDeleteConfirmationCallback(this);
             DialogUtilities.showConfirmDialog(this, R.string.are_you_sure, callback, null, 0, null);
+        } else if (id == R.id.mount_all_mountpoints_menuitem) {
+            MainService.mountAllMountPoints();
+        } else if (id == R.id.umount_all_mountpoints_menuitem) {
+            MainService.umoun
         }
         return true;
     }

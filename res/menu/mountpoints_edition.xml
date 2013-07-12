@@ -3,5 +3,7 @@
     
      <item android:id="@+id/insert_mountpoint_menuitem" android:title="@string/insert_mountpoint_menuitem" android:icon="@android:drawable/ic_menu_add"></item>
      <item android:id="@+id/delete_mountpoints_menuitem" android:title="@string/delete_mountpoints_menuitem" android:icon="@android:drawable/ic_menu_delete"></item>
-        
+     <item android:id="@+id/mount_all_mountpoints_menuitem" android:title="@string/mount_all_mountpoints_menuitem" android:icon="@android:drawable/ic_menu_delete"></item>
+     <item android:id="@+id/umount_all_mountpoints_menuitem" android:title="@string/umount_all_mountpoints_menuitem" android:icon="@android:drawable/ic_menu_delete"></item>
+
 </menu> 

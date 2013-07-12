@@ -74,6 +74,7 @@ public class MainService extends Service {
         iMountPoints = new ArrayList<MountPoint>();
         iUmsConnected = false;
         loadMountPointsFromDatabase();
+        mountEnabledMountPoints();
         iBroadcastReceiver = new MainServiceBroadcastReceiver();
         registerReceiver(iBroadcastReceiver, new IntentFilter(ACTION_RELOAD_PREFERENCES));
         registerReceiver(iBroadcastReceiver, new IntentFilter(ACTION_GET_MOUNT_STATES));
@@ -373,6 +374,39 @@ public class MainService extends Service {
             context.sendBroadcast(intent);
         } else {
             context.startService(intent);
+        }
+    }
+
+    public void mountAllMountPoints() {
+        mountpoint mountpoint;
+
+        for (int i = 0; i < imountpoints.size(); i++) {
+            mountpoint = imountpoints.get(i);
+            if (!mountpoint.getmounted()) {
+                executemountpointcommands(mountpoint, true);
+            }
+        }
+    }
+
+    public void umountAllMountPoints() {
+        mountpoint mountpoint;
+
+        for (int i = 0; i < imountpoints.size(); i++) {
+            mountpoint = imountpoints.get(i);
+            if (!mountpoint.getmounted()) {
+                executemountpointcommands(mountpoint, false);
+            }
+        }
+    }
+
+    public void mountEnabledMountPoints() {
+        MountPoint mountpoint;
+
+        for (int i = 0; i < imountpoints.size(); i++) {
+            mountpoint = iMountPoints.get(i);
+            if (!mountpoint.getMounted() && mountpoint.getEnabled()) {
+                executeMountPointCommands(mountpoint, true);
+            }
         }
     }
 
